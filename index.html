@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PARADISE</title>
+    <style>
+        :root {
+            --primary-color: #8fa189; 
+            --bg-color: #f7f7f7;
+            --text-main: #333;
+            --text-light: #888;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: "PingFang SC", "STHeiti", sans-serif; 
+            background: var(--bg-color); 
+            margin: 0; 
+            padding-bottom: 100px;
+            user-select: none;
+        }
+
+        /* 顶部统计 */
+        header {
+            background: var(--white);
+            padding: 20px 15px 15px;
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .stats-box {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 18px;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+
+        .stats-item { text-align: center; font-size: 13px; }
+        .stats-item b { font-size: 18px; display: block; margin-top: 4px; }
+
+        /* 分类导航 */
+        .category-nav { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
+        .category-nav::-webkit-scrollbar { display: none; }
+        .nav-btn {
+            border: none; padding: 8px 18px; border-radius: 20px;
+            background: #eee; color: var(--text-light);
+            font-size: 14px; white-space: nowrap; transition: 0.3s;
+        }
+        .nav-btn.active { background: var(--primary-color); color: white; }
+
+        /* 列表展示 */
+        .container { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card {
+            background: var(--white);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.1s;
+        }
+        .card img { width: 100%; height: 170px; object-fit: cover; background: #eee; display: block; }
+        .card-body { padding: 10px; }
+        .card-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-meta { display: flex; justify-content: space-between; align-items: center; }
+        .card-price { font-size: 14px; font-weight: 900; color: var(--primary-color); }
+
+        /* 详情弹窗 (全屏) */
+        .detail-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.98);
+            z-index: 3000; flex-direction: column; overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        .detail-img { width: 100%; max-height: 70vh; object-fit: contain; background: #000; }
+        .detail-info { padding: 30px 20px; }
+        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #000; }
+        .detail-price { font-size: 20px; color: var(--primary-color); font-weight: 900; margin-bottom: 15px; }
+        .detail-desc { font-size: 16px; color: #666; line-height: 1.6; white-space: pre-wrap; }
+        .close-detail { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; border: none; font-size: 20px; z-index: 3100; }
+
+        /* 操作菜单 */
+        .action-menu {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+            z-index: 2000; align-items: flex-end; justify-content: center;
+        }
+        .menu-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; }
+        .menu-btn { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; }
+
+        /* 悬浮按钮 */
+        .fab {
+            position: fixed; bottom: 30px; right: 25px; width: 56px; height: 56px;
+            background: var(--primary-color); color: white; border-radius: 50%;
+            border: none; font-size: 28px; box-shadow: 0 4px 15px rgba(143,161,137,0.5);
+            display: flex; align-items: center; justify-content: center; z-index: 90;
+        }
+
+        /* 弹窗表单 */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-content { background: white; width: 88%; border-radius: 20px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 14px; outline: none; }
+        .save-btn { background: var(--primary-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="stats-box">
+        <div class="stats-item">我的收藏<b id="count-num">0</b></div>
+        <div class="stats-item">估算总值<b id="price-num">¥0</b></div>
+    </div>
+    <div class="category-nav">
+        <button class="nav-btn active" onclick="setFilter('全部')">全部</button>
+        <button class="nav-btn" onclick="setFilter('上衣')">上衣</button>
+        <button class="nav-btn" onclick="setFilter('下裙')">下裙</button>
+        <button class="nav-btn" onclick="setFilter('外套')">外套</button>
+    </div>
+</header>
+
+<div class="container" id="list-container"></div>
+
+<button class="fab" onclick="openAddModal()">+</button>
+
+<div class="detail-overlay" id="detail-overlay">
+    <button class="close-detail" onclick="closeDetail()">×</button>
+    <img id="d-img" class="detail-img">
+    <div class="detail-info">
+        <div id="d-title" class="detail-title"></div>
+        <div id="d-price" class="detail-price"></div>
+        <div id="d-desc" class="detail-desc"></div>
+    </div>
+</div>
+
+<div class="action-menu" id="action-menu" onclick="closeMenu()">
+    <div class="menu-content" onclick="event.stopPropagation()">
+        <button class="menu-btn" style="background: var(--primary-color); color:white;" onclick="handleEdit()">编辑衣物</button>
+        <button class="menu-btn" style="background: #fee; color: #e55;" onclick="handleDelete()">删除此项</button>
+        <button class="menu-btn" onclick="closeMenu()" style="background:#eee;">取消</button>
+    </div>
+</div>
+
+<div class="modal" id="form-modal">
+    <div class="modal-content">
+        <h3 id="modal-title" style="text-align:center; color:var(--primary-color);">添加衣物</h3>
+        <input type="file" id="f-img" accept="image/*">
+        <input type="text" id="f-name" placeholder="物品名称 (例如：赤二本夏服)">
+        <select id="f-cat">
+            <option value="上衣">上衣</option>
+            <option value="下裙">下裙</option>
+            <option value="外套">外套</option>
+        </select>
+        <input type="number" id="f-price" placeholder="价格 (¥)">
+        <textarea id="f-desc" rows="3" placeholder="详细介绍..."></textarea>
+        <button class="save-btn" onclick="handleSubmit()">保存</button>
+        <button onclick="closeModal()" style="width:100%; margin-top:10px; background:none; border:none; color:#bbb;">取消</button>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('wardrobe_v4')) || [];
+    let filter = '全部';
+    let currentId = null; 
+    let pressTimer = null;
+    let isLongPress = false;
+
+    function render() {
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+        const filteredData = db.filter(item => filter === '全部' || item.cat === filter);
+        let total = 0;
+
+        filteredData.forEach(item => {
+            total += parseFloat(item.price || 0);
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 改进的点击与长按冲突处理
+            card.onpointerdown = (e) => {
+                isLongPress = false;
+                pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    window.navigator.vibrate?.(50);
+                    showMenu(item.id);
+                }, 600);
+            };
+            card.onpointerup = (e) => {
+                clearTimeout(pressTimer);
+                if (!isLongPress) openDetail(item.id); // 不是长按就开详情
+            };
+            card.oncontextmenu = (e) => e.preventDefault();
+
+            card.innerHTML = `
+                <img src="${item.img}">
+                <div class="card-body">
+                    <div class="card-title">${item.name || '未命名'}</div>
+                    <div class="card-meta">
+                        <span class="card-price">¥${item.price}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        document.getElementById('count-num').innerText = filteredData.length;
+        document.getElementById('price-num').innerText = '¥' + total.toFixed(0);
+        localStorage.setItem('wardrobe_v4', JSON.stringify(db));
+    }
+
+    // 详情页逻辑
+    function openDetail(id) {
+        const item = db.find(i => i.id === id);
+        document.getElementById('d-img').src = item.img;
+        document.getElementById('d-title').innerText = item.name || '未命名';
+        document.getElementById('d-price').innerText = '¥ ' + item.price;
+        document.getElementById('d-desc').innerText = item.desc || '暂无详细描述';
+        document.getElementById('detail-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // 禁止底页滚动
+    }
+
+    function closeDetail() {
+        document.getElementById('detail-overlay').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // 原有管理逻辑
+    function showMenu(id) {
+        currentId = id;
+        document.getElementById('action-menu').style.display = 'flex';
+    }
+    function closeMenu() { document.getElementById('action-menu').style.display = 'none'; }
+
+    function handleEdit() {
+        const item = db.find(i => i.id === currentId);
+        document.getElementById('modal-title').innerText = "编辑衣物";
+        document.getElementById('f-name').value = item.name || '';
+        document.getElementById('f-price').value = item.price;
+        document.getElementById('f-cat').value = item.cat;
+        document.getElementById('f-desc').value = item.desc;
+        closeMenu();
+        document.getElementById('form-modal').style.display = 'flex';
+    }
+
+    function handleDelete() {
+        if(confirm('确定要删除吗？')) {
+            db = db.filter(i => i.id !== currentId);
+            closeMenu(); render();
+        }
+    }
+
+    function handleSubmit() {
+        const name = document.getElementById('f-name').value;
+        const price = document.getElementById('f-price').value;
+        const cat = document.getElementById('f-cat').value;
+        const desc = document.getElementById('f-desc').value;
+        const file = document.getElementById('f-img').files[0];
+        if (!price) return alert('请填写价格');
+
+        const save = (imgData) => {
+            if (currentId && document.getElementById('modal-title').innerText === "编辑衣物") {
+                const idx = db.findIndex(i => i.id === currentId);
+                db[idx] = { ...db[idx], name, price, cat, desc, img: imgData || db[idx].img };
+            } else {
+                if (!imgData) return alert('请上传照片');
+                db.push({ id: Date.now(), name, price, cat, desc, img: imgData });
+            }
+            closeModal(); render();
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => save(e.target.result);
+            reader.readAsDataURL(file);
+        } else { save(null); }
+    }
+
+    function openAddModal() {
+        currentId = null;
+        document.getElementById('modal-title').innerText = "添加衣物";
+        document.querySelectorAll('#form-modal input, #form-modal textarea').forEach(i => i.value = '');
+        document.getElementById('form-modal').style.display = 'flex';
+    }
+
+    function setFilter(c) {
+        filter = c;
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.innerText === c));
+        render();
+    }
+
+    function closeModal() { document.getElementById('form-modal').style.display = 'none'; }
+
+    render();
+</script>
+
+</body>
+</html>
+
+
