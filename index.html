@@ -1,63 +1,47 @@
 
-
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PARADISE</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary-color: #8fa189; 
-            --bg-color: #f7f7f7;
-            --text-main: #333;
-            --text-light: #888;
-            --white: #ffffff;
-            --shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
+        :root { --primary-color: #8fa189; --bg-color: #f7f7f7; --text-main: #333; --white: #ffffff; --shadow: 0 4px 15px rgba(0,0,0,0.05); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: "PingFang SC", "STHeiti", sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 100px; user-select: none; }
+        body { font-family: "PingFang SC", "STHeiti", sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 100px; }
         header { background: var(--white); padding: 20px 15px 15px; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
         .stats-box { background: var(--primary-color); color: white; padding: 15px; border-radius: 18px; display: flex; justify-content: space-around; margin-bottom: 15px; }
         .stats-item { text-align: center; font-size: 13px; }
         .stats-item b { font-size: 18px; display: block; margin-top: 4px; }
         .category-nav { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
         .category-nav::-webkit-scrollbar { display: none; }
-        .nav-btn { border: none; padding: 8px 18px; border-radius: 20px; background: #eee; color: var(--text-light); font-size: 14px; white-space: nowrap; transition: 0.3s; }
+        .nav-btn { border: none; padding: 8px 18px; border-radius: 20px; background: #eee; color: #888; font-size: 14px; white-space: nowrap; transition: 0.3s; }
         .nav-btn.active { background: var(--primary-color); color: white; }
         .container { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { background: var(--white); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); transition: transform 0.1s; }
+        .card { background: var(--white); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; }
         .card img { width: 100%; height: 170px; object-fit: cover; background: #eee; display: block; }
         .card-body { padding: 10px; }
         .card-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-meta { display: flex; justify-content: space-between; align-items: center; }
         .card-price { font-size: 14px; font-weight: 900; color: var(--primary-color); }
-        .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 3000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 3000; flex-direction: column; overflow-y: auto; }
         .detail-img { width: 100%; max-height: 70vh; object-fit: contain; background: #000; }
-        .detail-info { padding: 30px 20px; }
-        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #000; }
-        .detail-price { font-size: 20px; color: var(--primary-color); font-weight: 900; margin-bottom: 15px; }
-        .detail-desc { font-size: 16px; color: #666; line-height: 1.6; white-space: pre-wrap; }
         .close-detail { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; border: none; font-size: 20px; z-index: 3100; }
-        .action-menu { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; align-items: flex-end; justify-content: center; }
-        .menu-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; }
-        .menu-btn { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; }
         .fab { position: fixed; bottom: 30px; right: 25px; width: 56px; height: 56px; background: var(--primary-color); color: white; border-radius: 50%; border: none; font-size: 28px; box-shadow: 0 4px 15px rgba(143,161,137,0.5); display: flex; align-items: center; justify-content: center; z-index: 90; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 88%; border-radius: 20px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 14px; outline: none; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #eee; border-radius: 10px; outline: none; }
         .save-btn { background: var(--primary-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; }
-        .backup-bar { padding: 10px 15px; display: flex; gap: 10px; }
-        .tool-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--primary-color); background: transparent; color: var(--primary-color); font-size: 12px; font-weight: bold; }
+        .action-menu { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; align-items: flex-end; justify-content: center; }
+        .menu-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; }
+        .menu-btn { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="stats-box">
-        <div class="stats-item">我的收藏<b id="count-num">0</b></div>
+        <div class="stats-item">云端收藏<b id="count-num">0</b></div>
         <div class="stats-item">估算总值<b id="price-num">¥0</b></div>
     </div>
     <div class="category-nav">
@@ -70,20 +54,15 @@
 
 <div class="container" id="list-container"></div>
 
-<div class="backup-bar">
-    <button class="tool-btn" onclick="exportData()"> 备份数据</button>
-    <button class="tool-btn" onclick="importData()"> 恢复数据</button>
-</div>
-
 <button class="fab" onclick="openAddModal()">+</button>
 
 <div class="detail-overlay" id="detail-overlay">
     <button class="close-detail" onclick="closeDetail()">×</button>
     <img id="d-img" class="detail-img">
-    <div class="detail-info">
-        <div id="d-title" class="detail-title"></div>
-        <div id="d-price" class="detail-price"></div>
-        <div id="d-desc" class="detail-desc"></div>
+    <div style="padding:20px;">
+        <h2 id="d-title"></h2>
+        <p id="d-price" style="font-size:20px; color:var(--primary-color); font-weight:bold;"></p>
+        <p id="d-desc" style="white-space:pre-wrap; color:#666;"></p>
     </div>
 </div>
 
@@ -97,9 +76,9 @@
 
 <div class="modal" id="form-modal">
     <div class="modal-content">
-        <h3 id="modal-title" style="text-align:center; color:var(--primary-color);">添加衣物</h3>
+        <h3 id="modal-title" style="text-align:center;">添加新衣物</h3>
         <input type="file" id="f-img" accept="image/*">
-        <input type="text" id="f-name" placeholder="名称 (例如：赤二本夏服)">
+        <input type="text" id="f-name" placeholder="名称">
         <select id="f-cat">
             <option value="上衣">上衣</option>
             <option value="下裙">下裙</option>
@@ -107,19 +86,37 @@
         </select>
         <input type="number" id="f-price" placeholder="价格 (¥)">
         <textarea id="f-desc" rows="3" placeholder="详细介绍..."></textarea>
-        <button class="save-btn" onclick="handleSubmit()">保存</button>
+        <button id="submit-btn" class="save-btn" onclick="handleSubmit()">同步到云端</button>
         <button onclick="closeModal()" style="width:100%; margin-top:10px; background:none; border:none; color:#bbb;">取消</button>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('wardrobe_v4')) || [];
-    let filter = '全部';
-    let currentId = null; 
-    let isLongPress = false;
-    let pressTimer = null;
+    // 1. 初始化 Supabase
+    const SUPABASE_URL = 'https://eebunmqyftsltxkwaxwz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_pPf557aw9nRrofydTyiicA_eAd9rV9I';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 核心渲染逻辑
+    let db = [];
+    let filter = '全部';
+    let currentId = null;
+
+    // 2. 从云端拉取数据
+    async function fetchData() {
+        const { data, error } = await _supabase
+            .from('wardrobe')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error(error);
+            alert('获取数据失败，请检查网络或建表是否正确');
+        } else {
+            db = data;
+            render();
+        }
+    }
+
     function render() {
         const container = document.getElementById('list-container');
         container.innerHTML = '';
@@ -130,116 +127,108 @@
             total += parseFloat(item.price || 0);
             const card = document.createElement('div');
             card.className = 'card';
-            card.onpointerdown = (e) => {
-                isLongPress = false;
-                pressTimer = setTimeout(() => { isLongPress = true; showMenu(item.id); }, 600);
-            };
-            card.onpointerup = (e) => {
-                clearTimeout(pressTimer);
-                if (!isLongPress) openDetail(item.id);
-            };
-            card.oncontextmenu = (e) => e.preventDefault();
-            card.innerHTML = `<img src="${item.img}"><div class="card-body"><div class="card-title">${item.name || '未命名'}</div><div class="card-meta"><span class="card-price">¥${item.price}</span></div></div>`;
+            // 手机端长按呼出菜单，点击看详情
+            let pressTimer;
+            card.addEventListener('touchstart', () => {
+                pressTimer = setTimeout(() => showMenu(item.id), 600);
+            });
+            card.addEventListener('touchend', () => clearTimeout(pressTimer));
+            card.onclick = () => { if(!currentId) openDetail(item.id); };
+
+            card.innerHTML = `
+                <img src="${item.img}">
+                <div class="card-body">
+                    <div class="card-title">${item.name || '未命名'}</div>
+                    <div class="card-price">¥${item.price}</div>
+                </div>`;
             container.appendChild(card);
         });
         document.getElementById('count-num').innerText = filteredData.length;
         document.getElementById('price-num').innerText = '¥' + total.toFixed(0);
-        localStorage.setItem('wardrobe_v4', JSON.stringify(db));
     }
 
-    // 备份导出逻辑
-    function exportData() {
-        const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `衣橱备份_${new Date().toLocaleDateString()}.json`;
-        a.click();
-    }
-
-    // 导入恢复逻辑
-    function importData() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = f => {
-                try {
-                    const imported = JSON.parse(f.target.result);
-                    if (Array.isArray(imported)) {
-                        db = imported;
-                        render();
-                        alert('✨ 数据恢复成功！');
-                    }
-                } catch (err) { alert('文件格式不对哦'); }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    }
-
-    // 详情显示
-    function openDetail(id) {
-        const item = db.find(i => i.id === id);
-        document.getElementById('d-img').src = item.img;
-        document.getElementById('d-title').innerText = item.name || '未命名';
-        document.getElementById('d-price').innerText = '¥ ' + item.price;
-        document.getElementById('d-desc').innerText = item.desc || '暂无详细描述';
-        document.getElementById('detail-overlay').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeDetail() { document.getElementById('detail-overlay').style.display = 'none'; document.body.style.overflow = 'auto'; }
-    function showMenu(id) { currentId = id; document.getElementById('action-menu').style.display = 'flex'; }
-    function closeMenu() { document.getElementById('action-menu').style.display = 'none'; }
-
-    function handleEdit() {
-        const item = db.find(i => i.id === currentId);
-        document.getElementById('modal-title').innerText = "编辑衣物";
-        document.getElementById('f-name').value = item.name || '';
-        document.getElementById('f-price').value = item.price;
-        document.getElementById('f-cat').value = item.cat;
-        document.getElementById('f-desc').value = item.desc;
-        closeMenu();
-        document.getElementById('form-modal').style.display = 'flex';
-    }
-
-    function handleDelete() {
-        if(confirm('确定要删除吗？')) { db = db.filter(i => i.id !== currentId); closeMenu(); render(); }
-    }
-
-    function handleSubmit() {
+    // 3. 提交数据到云端
+    async function handleSubmit() {
+        const btn = document.getElementById('submit-btn');
         const name = document.getElementById('f-name').value;
         const price = document.getElementById('f-price').value;
         const cat = document.getElementById('f-cat').value;
         const desc = document.getElementById('f-desc').value;
         const file = document.getElementById('f-img').files[0];
-        if (!price) return alert('请填写价格');
-        const save = (imgData) => {
-            if (currentId && document.getElementById('modal-title').innerText === "编辑衣物") {
-                const idx = db.findIndex(i => i.id === currentId);
-                db[idx] = { ...db[idx], name, price, cat, desc, img: imgData || db[idx].img };
-            } else {
-                if (!imgData) return alert('请上传照片');
-                db.push({ id: Date.now(), name, price, cat, desc, img: imgData });
-            }
-            closeModal(); render();
-        };
+
+        if (!price || (!file && !currentId)) return alert('请填写完整信息');
+
+        btn.innerText = '正在同步...';
+        btn.disabled = true;
+
+        let imgBase64 = null;
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => save(e.target.result);
-            reader.readAsDataURL(file);
-        } else { save(null); }
+            imgBase64 = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        const payload = { name, price: parseFloat(price), cat, description: desc };
+        if (imgBase64) payload.img = imgBase64;
+
+        let result;
+        if (currentId) {
+            result = await _supabase.from('wardrobe').update(payload).eq('id', currentId);
+        } else {
+            result = await _supabase.from('wardrobe').insert([payload]);
+        }
+
+        if (result.error) {
+            alert('云端同步失败：' + result.error.message);
+        } else {
+            closeModal();
+            fetchData();
+        }
+        btn.innerText = '同步到云端';
+        btn.disabled = false;
     }
 
-    function openAddModal() { currentId = null; document.getElementById('modal-title').innerText = "添加衣物"; document.querySelectorAll('#form-modal input, #form-modal textarea').forEach(i => i.value = ''); document.getElementById('form-modal').style.display = 'flex'; }
-    function setFilter(c) { filter = c; document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.innerText === c)); render(); }
-    function closeModal() { document.getElementById('form-modal').style.display = 'none'; }
+    // 4. 删除逻辑
+    async function handleDelete() {
+        if (confirm('确定从云端永久删除吗？')) {
+            const { error } = await _supabase.from('wardrobe').delete().eq('id', currentId);
+            if (error) alert('删除失败');
+            else { closeMenu(); fetchData(); }
+        }
+    }
 
-    render();
+    // 基础交互函数
+    function openAddModal() { currentId = null; document.getElementById('modal-title').innerText = "添加新衣物"; document.querySelectorAll('.modal-content input, .modal-content textarea').forEach(i => i.value = ''); document.getElementById('form-modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('form-modal').style.display = 'none'; }
+    function showMenu(id) { currentId = id; document.getElementById('action-menu').style.display = 'flex'; }
+    function closeMenu() { document.getElementById('action-menu').style.display = 'none'; currentId = null; }
+    function setFilter(c) { filter = c; document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.innerText === c)); render(); }
+    
+    function openDetail(id) {
+        const item = db.find(i => i.id === id);
+        document.getElementById('d-img').src = item.img;
+        document.getElementById('d-title').innerText = item.name;
+        document.getElementById('d-price').innerText = '¥' + item.price;
+        document.getElementById('d-desc').innerText = item.description || '无详细介绍';
+        document.getElementById('detail-overlay').style.display = 'flex';
+    }
+    function closeDetail() { document.getElementById('detail-overlay').style.display = 'none'; }
+
+    function handleEdit() {
+        const item = db.find(i => i.id === currentId);
+        document.getElementById('modal-title').innerText = "编辑衣物";
+        document.getElementById('f-name').value = item.name;
+        document.getElementById('f-price').value = item.price;
+        document.getElementById('f-cat').value = item.cat;
+        document.getElementById('f-desc').value = item.description;
+        document.getElementById('action-menu').style.display = 'none';
+        document.getElementById('form-modal').style.display = 'flex';
+    }
+
+    // 初始化加载
+    fetchData();
 </script>
 </body>
 </html>
-
